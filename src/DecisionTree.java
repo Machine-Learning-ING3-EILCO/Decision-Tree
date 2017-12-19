@@ -68,7 +68,7 @@ public class DecisionTree {
 		// peut prendre une colonne
 		// Exemple attributCible = 4 -> décision peut prendre 2 valeurs : oui et non
 		String Vi = data.getValeursAttributs().get(attributCible).get(0);
-		System.out.println("VI" + Vi);
+		//System.out.println("VI" + Vi);
 		/* Calculer le nombre de chaque valeur */ // Nb oui & Nb non
 		for (int i = 1; i < nb.length; i++) {
 			if(!Vi.equals(data.getValeursAttributs().get(attributCible).get(i))){
@@ -117,45 +117,84 @@ public class DecisionTree {
 	//id3  : l'algorithme qui construit l'arbre de décision
 	Node id3(DataFrame data, int attributCible, ArrayList<Integer> attributs) {
 		
-		
+		Node resultat = null;
+		int indiceMaxGain=0;
 		//-------------Code pour désigner la racine
 		//calcule du gain de tous les attributs et retourner 
 		//l'attribut ayant le plus grand gain
 		
 		
 		if(allEquals(data, attributCible)) {
-			racine.setFeuille(true);
-			String Vi = data.getValeursAttributs().get(attributCible).get(0);
-			racine.setIdAttribut(attributCible);
+			resultat = new Node(attributCible, data.getNomAttributs().get(attributCible), true);
+			resultat.ajouter(data.getValeursAttributs().get(attributCible).get(0), null);
+            return resultat;
 			//à continuer
 		}
 		else if ( attributs == null ) {
-			racine.setFeuille(true);
-			int indiceplusFrequent=	plusFrequente(data,attributCible);
-			racine.setIdAttribut(attributCible);
+			int indiceplusFrequent = plusFrequente(data, attributCible);
+            resultat = new Node(indiceplusFrequent, data.getNomAttributs().get(indiceplusFrequent), true);
+            resultat.ajouter(data.getValeursAttributs().get(attributCible).get(indiceplusFrequent), null);
+            return resultat;
 		}
-		else {
+
 			//trouver l'attribut de plus grand gain
-			int i=0; //indice de la colonne
 			double maxGain=0;
-			int indiceMaxGain=-1;
-			for(i=0;i<attributCible;i++) {
+			
+			for(int i=0;i<attributCible;i++) {
 				double gain=this.gain(data, attributCible, i);
 				if(gain>maxGain) {
 					maxGain=gain;
 					indiceMaxGain=i;
 				}
 			}
-			racine.setIdAttribut(indiceMaxGain);
+			
+			//resultat.setIdAttribut(indiceMaxGain);
+			
+			resultat = new Node(indiceMaxGain, data.getNomAttributs().get(indiceMaxGain), false);
 			
 			
-			//id3 appel recursive
-			//id3(subdata.select, attributCible, attributs.remove)
+	        ArrayList<String> values = data.getValeursAttributs().get(indiceMaxGain);
+
+	        for (int i1 = 0; i1<values.size() ; i1++) {
+
+
+	            DataFrame df = data.select(indiceMaxGain, values.get(i1));
+
+	            if (df.getExemples().size() == 0){
+
+	                int indicePlusFrequ = plusFrequente(df, attributCible);
+	                resultat.ajouter(df.getValeursAttributs().get(indiceMaxGain).get(indicePlusFrequ), new Node(indiceMaxGain, data.getNomAttributs().get(indiceMaxGain),true) );
+	            }
+
+	          //id3 appel recursive
+	            if (!attributs.isEmpty()) {
+	            	attributs.remove(indiceMaxGain);
+		            resultat.ajouter(values.get(i1), id3(df, attributCible, attributs));
+	            }
+	            
+	                
+	        }
+	        return resultat;
 		}
-		return racine;
-	}
+		
 	
-	
+	public String predire(Node racine, String exemple){
+		String resultat = null;
+        String attr = racine.getAttribut();
+
+        // Si le noeud est feuille on retourne son etiquette
+        if (racine.isFeuille()){
+            return racine.getEtiquette(0);
+        }
+
+
+        for (int i = 0; i < racine.getSuccesseurs().size(); i++){
+            if (racine.getEtiquette(i).equals(exemple)){
+                return predire(racine.getSuccesseurs().get(i), exemple);
+            }
+        }
+        return resultat;
+    }
 	
 	
 }

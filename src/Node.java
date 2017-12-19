@@ -34,6 +34,10 @@ public class Node {
 		this.feuille = feuille;
 	}
 	
+	public Node() {
+		
+	}
+	
 	
 	//getters
 	public int getIdAttribut() {
